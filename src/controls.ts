@@ -1,12 +1,15 @@
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { game } from './main';
+import { engine } from './main';
 
 export class Controls {
-    private controls = new OrbitControls( game.camera, game.renderer.domElement );
+    private controls = new OrbitControls( engine.camera, engine.renderer.domElement );
 
     constructor() {
         this.controls.update();
 
+        this.controls.addEventListener('change', () => engine.needRenderUpdate = true);
+
+        engine.needRenderUpdate = true;
         this.Update();
     }
 
