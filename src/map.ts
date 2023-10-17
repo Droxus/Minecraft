@@ -2,7 +2,10 @@ import * as THREE from 'three';
 import { engine } from './main';
 
 export class Map {
-      private cubeMaterial2 = new THREE.MeshBasicMaterial({color: 'blue'});
+      private cubeMaterial2 = new THREE.MeshBasicMaterial({
+        // color: 'blue',
+       vertexColors: true});
+      private cubeMaterial3 = new THREE.MeshBasicMaterial({color: 'yellow'});
     // private xGrid = 16;
     // private yGrid = 128;
     // private zGrid = 16;
@@ -44,86 +47,182 @@ export class Map {
         this.displayBlocks(toDisplayBlocks);
     }
     private displayBlocks(toDisplayBlocks: any) {
-        const positionAttribute = new Float32Array([
-            // Front face
-            -1.0, -1.0, 1.0,    // 0
-            1.0, -1.0, 1.0,     // 1
-            1.0, 1.0, 1.0,      // 2
-            -1.0, 1.0, 1.0,     // 3
+        const texture = new THREE.TextureLoader().load('./src/assets/textures/redstone_ore.png');
 
-            // Back face
-            -1.0, -1.0, -1.0,   // 4
-            1.0, -1.0, -1.0,    // 5
-            1.0, 1.0, -1.0,     // 6
-            -1.0, 1.0, -1.0     // 7
+        texture.format = THREE.RGBAFormat
+        
+        texture.minFilter = THREE.NearestFilter;
+        texture.magFilter = THREE.NearestFilter;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+  
+        const geometryWidth = 16; 
+        const geometryHeight = 16; 
+        const textureWidth = 16;
+        const textureHeight = 16;
+        const textureAspect = textureWidth / textureHeight;
+        const geometryAspect = geometryWidth / geometryHeight; 
+        if (textureAspect > geometryAspect) {
+          texture.repeat.set(geometryWidth / textureWidth, 1);
+        } else {
+          texture.repeat.set(1, geometryHeight / textureHeight);
+        }
+
+        const material = new THREE.MeshBasicMaterial({ map: texture });
+
+        const cubeSize = 0.5;
+
+        const positionAttribute = new Float32Array([
+            cubeSize, cubeSize, cubeSize,      //0
+            cubeSize, cubeSize, -cubeSize,     //1
+            cubeSize, -cubeSize, cubeSize,     //2
+            cubeSize, -cubeSize, -cubeSize,    //3
+
+            -cubeSize, cubeSize, -cubeSize,    //4
+            -cubeSize, cubeSize, cubeSize,     //5
+            -cubeSize, -cubeSize,-cubeSize,    //6
+            -cubeSize, -cubeSize, cubeSize,    //7
+            
+            -cubeSize, cubeSize, -cubeSize,    //8
+            cubeSize, cubeSize, -cubeSize,     //9
+            -cubeSize, cubeSize, cubeSize,     //10
+            cubeSize, cubeSize, cubeSize,      //11
+
+            -cubeSize, -cubeSize, cubeSize,    //12
+            cubeSize, -cubeSize, cubeSize,     //13
+            -cubeSize, -cubeSize, -cubeSize,   //14
+            cubeSize, -cubeSize, -cubeSize,    //15
+
+            -cubeSize, cubeSize, cubeSize,     //16
+            cubeSize, cubeSize, cubeSize,      //17
+            -cubeSize, -cubeSize, cubeSize,    //18
+            cubeSize, -cubeSize, cubeSize,     //19
+
+            cubeSize, cubeSize, -cubeSize,     //20
+            -cubeSize, cubeSize, -cubeSize,    //21
+            cubeSize, -cubeSize, -cubeSize,    //22
+            -cubeSize, -cubeSize, -cubeSize    //23
         ]);
 
+        const uvAttribute = new Float32Array([
+            0, 1, 1, 1, 0, 0, 1, 0,
 
-        const indicesTop = [6, 3, 2, 7, 3, 6]
-        const indicesBottom = [4, 5, 0, 0, 5, 1]
-        const indicesLeft = [0, 3, 4, 4, 3, 7]
-        const indicesRight = [5, 2, 1, 6, 2, 5]
-        const indicesFront = [0, 1, 2, 0, 2, 3]
-        const indicesBack = [5, 7, 6, 4, 7, 5]
+            0, 1, 1, 1, 0, 0, 1, 0,
 
-        let geometry2
+            0, 1, 1, 1, 0, 0, 1, 0,
 
-        geometry2 = new THREE.InstancedBufferGeometry();
-        geometry2.setIndex( indicesTop );
-        geometry2.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
-        this.cubeTop = new THREE.InstancedMesh(geometry2, this.cubeMaterial2, toDisplayBlocks.top.length);
-        geometry2 = new THREE.InstancedBufferGeometry();
-        geometry2.setIndex( indicesBottom );
-        geometry2.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
-        this.cubeBottom = new THREE.InstancedMesh(geometry2, this.cubeMaterial2, toDisplayBlocks.bottom.length);
-        geometry2 = new THREE.InstancedBufferGeometry();
-        geometry2.setIndex( indicesLeft );
-        geometry2.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
-        this.cubeLeft = new THREE.InstancedMesh(geometry2, this.cubeMaterial2, toDisplayBlocks.left.length);
-        geometry2 = new THREE.InstancedBufferGeometry();
-        geometry2.setIndex( indicesRight );
-        geometry2.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
-        this.cubeRight = new THREE.InstancedMesh(geometry2, this.cubeMaterial2, toDisplayBlocks.right.length);
-        geometry2 = new THREE.InstancedBufferGeometry();
-        geometry2.setIndex( indicesFront );
-        geometry2.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
-        this.cubeFront = new THREE.InstancedMesh(geometry2, this.cubeMaterial2, toDisplayBlocks.front.length);
-        geometry2 = new THREE.InstancedBufferGeometry();
-        geometry2.setIndex( indicesBack );
-        geometry2.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
-        this.cubeBack = new THREE.InstancedMesh(geometry2, this.cubeMaterial2, toDisplayBlocks.back.length);
-        geometry2 = new THREE.InstancedBufferGeometry();
+            0, 1, 1, 1, 0, 0, 1, 0,
+
+            0, 1, 1, 1,  0, 0, 1, 0,
+
+            0, 1, 1, 1, 0, 0, 1, 0
+        ])
+
+        const geomtryIndex = {
+            right : new Uint16Array([ 0, 2, 1, 2, 3, 1 ]),
+            left : new Uint16Array([ 4, 6, 5, 6, 7, 5 ]),
+            top : new Uint16Array([ 8, 10, 9, 10, 11, 9 ]),
+            bottom : new Uint16Array([ 12, 14, 13, 14, 15, 13 ]),
+            front : new Uint16Array([ 16, 18, 17, 18, 19, 17 ]),
+            back : new Uint16Array([ 20, 22, 21, 22, 23, 21 ])
+        }
+
+        let geometry;
+        geometry = new THREE.InstancedBufferGeometry();
+        geometry.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
+        geometry.setAttribute('uv', new THREE.BufferAttribute( uvAttribute, 2 ));
+
+        geometry = new THREE.InstancedBufferGeometry();
+        geometry.setIndex( new THREE.BufferAttribute( geomtryIndex.top, 1 ) );
+        geometry.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
+        geometry.setAttribute('uv', new THREE.BufferAttribute( uvAttribute, 2 ));
+        this.cubeTop = new THREE.InstancedMesh(geometry, material, toDisplayBlocks.top.length);
+
+        geometry = new THREE.InstancedBufferGeometry();
+        geometry.setIndex( new THREE.BufferAttribute( geomtryIndex.bottom, 1 ) );
+        geometry.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
+        geometry.setAttribute('uv', new THREE.BufferAttribute( uvAttribute, 2 ));
+        this.cubeBottom = new THREE.InstancedMesh(geometry, material, toDisplayBlocks.bottom.length);
+
+        geometry = new THREE.InstancedBufferGeometry();
+        geometry.setIndex( new THREE.BufferAttribute( geomtryIndex.left, 1 ) );
+        geometry.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
+        geometry.setAttribute('uv', new THREE.BufferAttribute( uvAttribute, 2 ));
+        this.cubeLeft = new THREE.InstancedMesh(geometry, material, toDisplayBlocks.left.length);
+
+        geometry = new THREE.InstancedBufferGeometry();
+        geometry.setIndex( new THREE.BufferAttribute( geomtryIndex.right, 1 ) );
+        geometry.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
+        geometry.setAttribute('uv', new THREE.BufferAttribute( uvAttribute, 2 ));
+        this.cubeRight = new THREE.InstancedMesh(geometry, material, toDisplayBlocks.right.length);
+
+        geometry = new THREE.InstancedBufferGeometry();
+        geometry.setIndex( new THREE.BufferAttribute( geomtryIndex.front, 1 ) );
+        geometry.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
+        geometry.setAttribute('uv', new THREE.BufferAttribute( uvAttribute, 2 ));
+        this.cubeFront = new THREE.InstancedMesh(geometry, material, toDisplayBlocks.front.length);
+
+        geometry = new THREE.InstancedBufferGeometry();
+        geometry.setIndex( new THREE.BufferAttribute( geomtryIndex.back, 1 ) );
+        geometry.setAttribute('position',  new THREE.BufferAttribute( positionAttribute, 3 ));
+        geometry.setAttribute('uv', new THREE.BufferAttribute( uvAttribute, 2 ));
+        this.cubeBack = new THREE.InstancedMesh(geometry, material, toDisplayBlocks.back.length);
+
+
+        let colorAttribute
+        colorAttribute = new THREE.InstancedBufferAttribute(new Float32Array(3 * toDisplayBlocks.top.length), 3);
 
         for (let i = 0; i < toDisplayBlocks.top.length; i++) {
             let thisPos = toDisplayBlocks.top[i]
-            this.matrixTop.setPosition(thisPos[0] * 2 + 2, thisPos[1] * 2  + 2, thisPos[2] * 2  + 2);
+            this.matrixTop.setPosition(thisPos[0] + 2, thisPos[1] + 2, thisPos[2] + 2);
             this.cubeTop.setMatrixAt(i, this.matrixTop);
+            // this.cubeTop.instanceMaterialIndex.setX(i, 0);
+            // colorAttribute.setXYZ(i, Math.random(), Math.random(), Math.random());
         }
+        // this.cubeTop.geometry.setAttribute('color', colorAttribute);
+
+        colorAttribute = new THREE.InstancedBufferAttribute(new Float32Array(3 * toDisplayBlocks.bottom.length), 3);
         for (let i = 0; i < toDisplayBlocks.bottom.length; i++) {
             let thisPos = toDisplayBlocks.bottom[i]
-            this.matrixBottom.setPosition(thisPos[0] * 2  + 2, thisPos[1] * 2  + 2, thisPos[2] * 2  + 2);
+            this.matrixBottom.setPosition(thisPos[0] + 2, thisPos[1] + 2, thisPos[2] + 2);
             this.cubeBottom.setMatrixAt(i, this.matrixBottom);
+            colorAttribute.setXYZ(i, Math.random(), Math.random(), Math.random());
         }
+        this.cubeBottom.geometry.setAttribute('color', colorAttribute);
+        colorAttribute = new THREE.InstancedBufferAttribute(new Float32Array(3 * toDisplayBlocks.left.length), 3);
         for (let i = 0; i < toDisplayBlocks.left.length; i++) {
             let thisPos = toDisplayBlocks.left[i]
-            this.matrixLeft.setPosition(thisPos[0] * 2  + 2, thisPos[1] * 2  + 2, thisPos[2] * 2  + 2);
+            this.matrixLeft.setPosition(thisPos[0] + 2, thisPos[1] + 2, thisPos[2] + 2);
             this.cubeLeft.setMatrixAt(i, this.matrixLeft);
+            colorAttribute.setXYZ(i, Math.random(), Math.random(), Math.random());
         }
+        this.cubeLeft.geometry.setAttribute('color', colorAttribute);
+        colorAttribute = new THREE.InstancedBufferAttribute(new Float32Array(3 * toDisplayBlocks.right.length), 3);
         for (let i = 0; i < toDisplayBlocks.right.length; i++) {
             let thisPos = toDisplayBlocks.right[i]
-            this.matrixRight.setPosition(thisPos[0] * 2  + 2, thisPos[1] * 2  + 2, thisPos[2] * 2  + 2);
+            this.matrixRight.setPosition(thisPos[0] + 2, thisPos[1] + 2, thisPos[2] + 2);
             this.cubeRight.setMatrixAt(i, this.matrixRight);
+            colorAttribute.setXYZ(i, Math.random(), Math.random(), Math.random());
         }
+        this.cubeRight.geometry.setAttribute('color', colorAttribute);
+        colorAttribute = new THREE.InstancedBufferAttribute(new Float32Array(3 * toDisplayBlocks.front.length), 3);
         for (let i = 0; i < toDisplayBlocks.front.length; i++) {
             let thisPos = toDisplayBlocks.front[i]
-            this.matrixFront.setPosition(thisPos[0] * 2  + 2, thisPos[1] * 2  + 2, thisPos[2] * 2  + 2);
+            this.matrixFront.setPosition(thisPos[0] + 2, thisPos[1] + 2, thisPos[2] + 2);
             this.cubeFront.setMatrixAt(i, this.matrixFront);
+            colorAttribute.setXYZ(i, Math.random(), Math.random(), Math.random());
         }
+        this.cubeFront.geometry.setAttribute('color', colorAttribute);
+        colorAttribute = new THREE.InstancedBufferAttribute(new Float32Array(3 * toDisplayBlocks.back.length), 3);
         for (let i = 0; i < toDisplayBlocks.back.length; i++) {
             let thisPos = toDisplayBlocks.back[i]
-            this.matrixBack.setPosition(thisPos[0] * 2  + 2, thisPos[1] * 2  + 2, thisPos[2] * 2  + 2);
+            this.matrixBack.setPosition(thisPos[0] + 2, thisPos[1] + 2, thisPos[2] + 2);
             this.cubeBack.setMatrixAt(i, this.matrixBack);
+            colorAttribute.setXYZ(i, Math.random(), Math.random(), Math.random());
         }
+        this.cubeBack.geometry.setAttribute('color', colorAttribute);
+
+        console.log(this.cubeTop)
 
         engine.scene.add(this.cubeTop)
         engine.scene.add(this.cubeBottom)
