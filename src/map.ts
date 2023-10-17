@@ -2,10 +2,10 @@ import * as THREE from 'three';
 import { engine } from './main';
 
 export class Map {
-      private cubeMaterial2 = new THREE.MeshBasicMaterial({
-        // color: 'blue',
-       vertexColors: true});
-      private cubeMaterial3 = new THREE.MeshBasicMaterial({color: 'yellow'});
+    //   private cubeMaterial2 = new THREE.MeshBasicMaterial({
+    //     // color: 'blue',
+    //    vertexColors: true});
+    //   private cubeMaterial3 = new THREE.MeshBasicMaterial({color: 'yellow'});
     // private xGrid = 16;
     // private yGrid = 128;
     // private zGrid = 16;
