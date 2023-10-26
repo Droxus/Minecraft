@@ -1,7 +1,7 @@
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { engine } from './main';
 
-export class Controls {
+export default class Controls {
     private controls = new OrbitControls( engine.camera, engine.renderer.domElement );
 
     constructor() {
