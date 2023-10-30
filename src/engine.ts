@@ -7,7 +7,7 @@ export default class Engine {
     public light: THREE.AmbientLight;
     public clock: THREE.Clock;
     public delta: number;
-    public needRenderUpdate: boolean;
+    public needsRenderUpdate: boolean;
 
     constructor() {
         this.scene = new THREE.Scene();
@@ -23,13 +23,13 @@ export default class Engine {
 
         this.init();
 
-        this.needRenderUpdate = true;
+        this.needsRenderUpdate = true;
         this.Update();
     }
 
     private init(): void {
         this.renderer.setSize( window.innerWidth, window.innerHeight );
-        this.scene.addEventListener('objectAdded', () => this.needRenderUpdate = true);
+        this.scene.addEventListener('objectAdded', () => this.needsRenderUpdate = true);
 
         (document.getElementById("app") as HTMLDivElement).appendChild( this.renderer.domElement );
         window.addEventListener('resize', () => this.onResize());
@@ -47,8 +47,8 @@ export default class Engine {
         requestAnimationFrame( () => this.Update() );
         this.delta = this.clock.getDelta()
 
-        if (!this.needRenderUpdate) return;
+        if (!this.needsRenderUpdate) return;
         this.renderer.render( this.scene, this.camera );
-        this.needRenderUpdate = false;
+        this.needsRenderUpdate = false;
     }
 }

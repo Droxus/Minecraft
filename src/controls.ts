@@ -1,5 +1,8 @@
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { engine } from './main';
+import Blocks from './blocks';
+
+const blocks = new Blocks()
 
 export default class Controls {
     private controls = new OrbitControls( engine.camera, engine.renderer.domElement );
@@ -7,10 +10,18 @@ export default class Controls {
     constructor() {
         this.controls.update();
 
-        this.controls.addEventListener('change', () => engine.needRenderUpdate = true);
+        this.controls.addEventListener('change', () => engine.needsRenderUpdate = true);
 
-        engine.needRenderUpdate = true;
+        this.init();
+
+        engine.needsRenderUpdate = true;
         this.Update();
+    }
+
+    private init() {
+        window.onclick = () => {
+            blocks.create();
+        }
     }
 
     private Update() {

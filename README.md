@@ -1,2 +1,2 @@
 # Minecraft
-By this repository I want to recreate my favourite game and to make it better
+By this repository I want to recreate my favorite game and make it better

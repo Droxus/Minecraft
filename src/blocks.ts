@@ -11,9 +11,13 @@ export default class Blocks {
     private blockSize: number;
     private boxGeometry: THREE.BoxGeometry;
     private cube: any
-    private matrix: any;
+    private matrix: THREE.Matrix4;
     private sides: string[];
     private material: THREE.Material;
+
+    private maxCustomCubes: number;
+    private customCube: any;
+    private createdBlocks: any[];
     
     public textures: THREE.Texture[];
 
@@ -21,14 +25,17 @@ export default class Blocks {
         this.blockSize = 1;
         this.boxGeometry = new THREE.BoxGeometry(this.blockSize, this.blockSize, this.blockSize);
         this.cube = {};
-        this.matrix = {};
+        this.matrix = new THREE.Matrix4();
         this.sides = [ 'right', 'left', 'top', 'bottom', 'front', 'back' ];
 
-        this.sides.forEach((side: any) => this.matrix[side] = new THREE.Matrix4());
         this.sides.forEach((side: any) => this.cube[side] = undefined);
 
         this.textures = this.getTextures();
         this.material = this.getBoxMaterial(this.textures);
+
+        this.maxCustomCubes = 64*64;
+        this.customCube = {};
+        this.createdBlocks = [];
     }
 
     private getTextures(): THREE.Texture[] {
@@ -76,20 +83,54 @@ export default class Blocks {
         return new THREE.InstancedMesh(geometry, this.material, length)
     }
 
-    public create(toDisplayBlocks: any) {
+    public createInstances(toDisplayBlocks: any, position: any) {
         const texturesArray = new THREE.InstancedBufferAttribute(new Uint8Array([2, 1, 2]), 1);
 
-        this.sides.forEach((side: string, index) => {
-            this.cube[side] = this.getInstancedMesh(index, texturesArray, toDisplayBlocks[side].length);
-        })
+        this.sides.forEach((side: string, index) => this.cube[side] = this.getInstancedMesh(index, texturesArray, toDisplayBlocks[side].length))
 
         Object.entries(toDisplayBlocks).forEach(([side, blocks]: any) => {
             blocks.forEach((block: any, index: number) => {
-                this.matrix[side].setPosition(block[0], block[1], block[2]);
-                this.cube[side].setMatrixAt(index, this.matrix[side]);
+                const x = block[0];
+                const y = block[1];
+                const z = block[2];
+
+                this.matrix.setPosition(x, y, z);
+                this.cube[side].setMatrixAt(index, this.matrix);
             });
+            const {x, y, z} = position;
+            this.cube[side].position.set(x, y, z);
         })
 
         Object.values(this.cube).forEach((cube: any) => engine.scene.add(cube))
+    }
+
+    private createCustomInstances() {
+        const texturesArray = new THREE.InstancedBufferAttribute(new Uint8Array([2, 1, 2, 1, 2, 1, 2]), 1);
+
+        this.sides.forEach((side: string, index) => {
+            this.customCube[side] = this.getInstancedMesh(index, texturesArray, this.maxCustomCubes);
+            this.customCube[side].position.set(0, 0, 0)
+        })
+
+        Object.values(this.customCube).forEach((blocks: any) => engine.scene.add(blocks))
+    }
+
+    public create() {
+        const position = {x: 2, y: 1, z: 2};
+        const {x, y, z} = position;
+        const blockIndex = this.createdBlocks.length;
+
+        this.createdBlocks.push([x, y, z]);
+
+        if (blockIndex > this.maxCustomCubes || !this.customCube.top) this.createCustomInstances();
+
+        this.matrix.setPosition(x, y, z);
+        this.sides.forEach(side => {
+            this.customCube[side].setMatrixAt(blockIndex, this.matrix)
+            this.customCube[side].instanceMatrix.needsUpdate = true;
+        })
+
+        engine.needsRenderUpdate = true
+        console.log('Block is created');
     }
 }
