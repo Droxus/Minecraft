@@ -6,14 +6,14 @@ const blocks = new Blocks();
 
 export default class Map {
     private sides: string[];
-    private chunkSize: THREE.Vector3;
+    // private chunkSize: THREE.Vector3;
     private megaChunkSize: THREE.Vector3;
 
     constructor() {
         console.time(); 
 
         this.sides = [ 'right', 'left', 'top', 'bottom', 'front', 'back' ]
-        this.chunkSize = new THREE.Vector3(16, 256, 16);
+        // this.chunkSize = new THREE.Vector3(16, 256, 16);
         // this.megaChunkSize = new THREE.Vector3(512, 128, 512);
         this.megaChunkSize = new THREE.Vector3(64, 1, 64);
         // this.megaChunkSize = new THREE.Vector3(16, 1, 16);
@@ -128,7 +128,7 @@ export default class Map {
 
     private checkBetweenChunksBlocksColide(chunks: any) {
         chunks.forEach((chunkRow: any[], x: number) =>
-            chunkRow.forEach((chunk, y: number) => {
+            chunkRow.forEach((_, y: number) => {
                 const isRightSide = (x == 0 || x == 1);
                 const isFrontSide = (y == 0 || y == 1);
 
