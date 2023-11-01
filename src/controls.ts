@@ -5,7 +5,7 @@ import Blocks from './blocks';
 const blocks = new Blocks()
 
 export default class Controls {
-    private controls = new OrbitControls( engine.camera, engine.renderer.domElement );
+    public controls = new OrbitControls( engine.camera, engine.renderer.domElement );
 
     constructor() {
         this.controls.update();

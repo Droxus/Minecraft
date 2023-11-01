@@ -32,8 +32,9 @@ export default class Engine {
         this.scene.addEventListener('objectAdded', () => this.needsRenderUpdate = true);
 
         (document.getElementById("app") as HTMLDivElement).appendChild( this.renderer.domElement );
-        window.addEventListener('resize', () => this.onResize());
+        window.onresize = () => this.onResize();
         document.body.oncontextmenu = () => false;
+        window.onkeydown = (e) => e.preventDefault();
     }
 
     private onResize(): void {
@@ -41,6 +42,7 @@ export default class Engine {
         this.camera.updateProjectionMatrix();
       
         this.renderer.setSize( window.innerWidth, window.innerHeight );
+        this.needsRenderUpdate = true;
     }
 
     private Update(): void {
