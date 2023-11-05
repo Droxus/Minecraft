@@ -101,7 +101,7 @@ export default class Blocks {
             this.cube[side].position.set(x, y, z);
         })
 
-        Object.values(this.cube).forEach((cube: any) => engine.scene.add(cube))
+        return this.cube;
     }
 
     private createCustomInstances() {

@@ -1,5 +1,5 @@
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { engine, controls } from './main'
+import { engine, controls, map } from './main'
 
 export default class DevTools {
     public stats: any;
@@ -11,7 +11,7 @@ export default class DevTools {
 
         this.openInfoBlock();
 
-        window.addEventListener("keydown", (event) => this.keys?.[event.key]?.())
+        window.addEventListener("keydown", (event) => this.keys?.[event.key]?.()); // move this to controls
 
         this.Update();
     }
@@ -40,11 +40,23 @@ export default class DevTools {
         controls.controls.addEventListener('change', this.updateCameraDevInfo);
         appDiv.appendChild(devInfoBlock);
             
-        const infoLine = {id: "cameraPosInfoLabel", header: "Camera Position"}
-        this.addInfoBlockLine(infoLine, this.updateCameraDevInfo);
+        const infoLines = [
+            {
+                id: "cameraPosInfoLabel",
+                header: "Camera Position",
+                callback: this.updateCameraDevInfo
+            },
+            {
+                id: "megaChunkLabel",
+                header: "Mega Chunk",
+                callback: this.updateCameraDevInfo
+            }
+        ]
+
+        infoLines.forEach((infoLine) => this.addInfoBlockLine(infoLine))
     }
 
-    private addInfoBlockLine(infoLine: any, toUpdateData: any) {
+    private addInfoBlockLine(infoLine: any) {
         const devInfoBlock =  document.getElementById("devInfoBlock") as HTMLDivElement;
 
         const infoLineLabel = document.createElement("label");
@@ -55,14 +67,20 @@ export default class DevTools {
         infoLabel.id = infoLine.id;
         devInfoBlock.appendChild(infoLabel);
 
-        toUpdateData();
+        infoLine.callback();
     }
 
     private updateCameraDevInfo(): void {
+        const { x, y, z } = engine.camera.position;
+        let decimalPlaces;
+
+        decimalPlaces = 3
         const cameraPosInfoLabel = document.getElementById("cameraPosInfoLabel") as HTMLLabelElement;
-        const decimalPlaces = 3;
-        const {x, y, z} = engine.camera.position;
         if (cameraPosInfoLabel) cameraPosInfoLabel.innerText = `x: ${x.toFixed(decimalPlaces)}, y: ${y.toFixed(decimalPlaces)}, z: ${z.toFixed(decimalPlaces)}`;
+
+        decimalPlaces = 0;
+        const megaChunkLabel = document.getElementById("megaChunkLabel") as HTMLLabelElement;
+        if (megaChunkLabel) megaChunkLabel.innerText = `x: ${map.megaChunk.x.toFixed(decimalPlaces)}, z: ${map.megaChunk.y.toFixed(decimalPlaces)}`;
     }
 
 

@@ -17,7 +17,7 @@ export default class Engine {
         this.clock = new THREE.Clock();
         this.delta = 0;
 
-        this.camera.position.z = 5;
+        this.camera.position.set(32, 1, 32);
         this.light.position.set(5, 5, 5);
         this.scene.add(this.light)
 
@@ -35,6 +35,20 @@ export default class Engine {
         window.onresize = () => this.onResize();
         document.body.oncontextmenu = () => false;
         window.onkeydown = (e) => e.preventDefault();
+    }
+
+    public removeAllObjects(objects: THREE.Mesh[]): void {
+        while (objects.length) this.removeObject(objects[0]);
+    }
+
+    public removeObject(object: THREE.Mesh): void {
+        const geometry = object.geometry;
+        const material: THREE.Material | THREE.Material[] = object.material;
+
+        geometry.dispose();
+        Array.isArray(material) ? material.forEach((material: THREE.Material) => material.dispose()) : material.dispose();
+    
+        object.parent?.remove(object);
     }
 
     private onResize(): void {
