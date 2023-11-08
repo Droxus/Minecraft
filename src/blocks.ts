@@ -5,7 +5,7 @@ import {vertexBoxInstancedShader, fragmentBoxInstancedShader} from './shaders'
 
 const isLoocalHost: boolean = (window.location.href.startsWith('http://localhost') || window.location.href.startsWith('http://127.0.0.1'));
 const contentPath: string = isLoocalHost ? '' : 'https://raw.githubusercontent.com/Droxus/Minecraft/main/';
-const texturePath: string = `${contentPath}/src/assets/textures/`;
+const atlasPath: string = contentPath + '/src/assets/' + 'atlas.png';
 
 export default class Blocks {
     private blockSize: number;
@@ -19,7 +19,7 @@ export default class Blocks {
     private customCube: any;
     private createdBlocks: any[];
     
-    public textures: THREE.Texture[];
+    public texture: THREE.Texture;
 
     constructor() {
         this.blockSize = 1;
@@ -30,36 +30,35 @@ export default class Blocks {
 
         this.sides.forEach((side: any) => this.cube[side] = undefined);
 
-        this.textures = this.getTextures();
-        this.material = this.getBoxMaterial(this.textures);
+        this.texture = new THREE.TextureLoader().load(atlasPath);
+        
+        this.texture.format = THREE.RGBAFormat
+        this.texture.minFilter = THREE.NearestFilter;
+        this.texture.magFilter = THREE.NearestFilter;
+        this.texture.wrapS = THREE.RepeatWrapping;
+        this.texture.wrapT = THREE.RepeatWrapping;
+
+        this.material = this.getBoxMaterial(this.texture);
 
         this.maxCustomCubes = 64*64;
         this.customCube = {};
         this.createdBlocks = [];
     }
 
-    private getTextures(): THREE.Texture[] {
-        const textures = [
-            new THREE.TextureLoader().load(texturePath + 'redstone_ore.png'),
-            new THREE.TextureLoader().load(texturePath + 'gold_ore.png'),
-            new THREE.TextureLoader().load(texturePath + 'lapis_ore.png'),
-            new THREE.TextureLoader().load(texturePath + 'diamond_ore.png'),
-            new THREE.TextureLoader().load(texturePath + 'emerald_ore.png'),
-            new THREE.TextureLoader().load(texturePath + 'iron_ore.png'),
-        ];
-
-        textures.forEach((texture: any) => texture.magFilter = THREE.NearestFilter);
-
-        return textures;
-    }
-
-    private getBoxMaterial(textures: THREE.Texture[]): THREE.ShaderMaterial {
+    private getBoxMaterial(textures: THREE.Texture): THREE.ShaderMaterial {
         return new THREE.ShaderMaterial({
             uniforms: {
                 map: {
                     value: textures,
+                },
+                atlasSize: {
+                    value: new THREE.Vector3(31, 31)
                 }
             },
+            opacity: 0.5,
+            transparent: true,
+            alphaTest: 0.5,
+            blending: THREE.NormalBlending,
             vertexShader: vertexBoxInstancedShader,
             fragmentShader: fragmentBoxInstancedShader,
         });
@@ -84,15 +83,13 @@ export default class Blocks {
     }
 
     public createInstances(toDisplayBlocks: any, position: any) {
-        const texturesArray = new THREE.InstancedBufferAttribute(new Uint8Array([2, 1, 2]), 1);
+        const texturesArray = new THREE.InstancedBufferAttribute(new Uint8Array([10, 24, 10, 25, 10, 24, 10, 25]), 1);
 
         this.sides.forEach((side: string, index) => this.cube[side] = this.getInstancedMesh(index, texturesArray, toDisplayBlocks[side].length))
 
         Object.entries(toDisplayBlocks).forEach(([side, blocks]: any) => {
             blocks.forEach((block: any, index: number) => {
-                const x = block[0];
-                const y = block[1];
-                const z = block[2];
+                const [ x, y, z ] = [ block[0], block[1], block[2] ];
 
                 this.matrix.setPosition(x, y, z);
                 this.cube[side].setMatrixAt(index, this.matrix);
@@ -105,7 +102,7 @@ export default class Blocks {
     }
 
     private createCustomInstances() {
-        const texturesArray = new THREE.InstancedBufferAttribute(new Uint8Array([2, 1, 2, 1, 2, 1, 2]), 1);
+        const texturesArray = new THREE.InstancedBufferAttribute(new Uint8Array([10, 24, 10, 25, 10, 24, 10, 25]), 1);
 
         this.sides.forEach((side: string, index) => {
             this.customCube[side] = this.getInstancedMesh(index, texturesArray, this.maxCustomCubes);

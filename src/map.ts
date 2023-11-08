@@ -1,8 +1,5 @@
 import * as THREE from 'three';
-import { engine } from './main';
-import Blocks from './blocks'
-
-const blocks = new Blocks();
+import { engine, blocks } from './main';
 
 export default class Map {
     private sides: string[];
@@ -21,7 +18,7 @@ export default class Map {
         this.megaChunkSize = new THREE.Vector3(64, 1, 64);
         // this.megaChunkSize = new THREE.Vector3(16, 1, 16);
         this.megaChunk = new THREE.Vector2(0, 0);
-        this.megaChunks = [[[], [], []], [[], [], []], [[], [], []]]
+        this.megaChunks = new Array(3).fill(null).map(() => new Array(3).fill([]));
         this.megaChunksGroup = new THREE.Group();
         engine.scene.add(this.megaChunksGroup)
 
@@ -56,8 +53,7 @@ export default class Map {
         for (let y = 0; y < ySize; ++y) {
             for (let x = 0; x < xSize; ++x) {
                 for (let z = 0; z < zSize; ++z) {
-                    if (chunkArray[y][x][z] && chunkArray[y][x][z].name !== 'air') {
-                        
+                    if (chunkArray[y][x][z] && chunkArray[y][x][z].name !== 'air') {      
                         if (!chunkArray[y+1] || chunkArray[y+1][x][z].name == 'air') toDisplayBlocks.top.push([x, y, z]);
                         if (!chunkArray[y-1] || chunkArray[y-1][x][z].name == 'air') toDisplayBlocks.bottom.push([x, y, z]);
                         if (!chunkArray[y][x+1] || chunkArray[y][x+1][z].name == 'air') toDisplayBlocks.right.push([x, y, z]);
@@ -80,7 +76,9 @@ export default class Map {
             for (let x = 0; x < this.megaChunkSize.x; x++) {
                 chunkArray[y].push([])
                 for (let z = 0; z < this.megaChunkSize.z; z++) {
-                    chunkArray[y][x].push({name: 'stone'})
+                    // const block = (x == 12) ? 'air' : 'stone';
+                    const block = 'stone';
+                    chunkArray[y][x].push({name: block})
                 }
             }
         }
@@ -109,18 +107,31 @@ export default class Map {
 
     private displayGeneratedMegaChunk(toDisplayBlocks: any) {
         const minHeight = 0;
+        const objectsToRemove: any[] = [];
 
-        engine.removeAllObjects(this.megaChunksGroup.children as THREE.Mesh[]);
+        this.megaChunksGroup.children.forEach((child: any) => {
+            if (
+                child.megaChunk.x < this.megaChunk.x - 1 || child.megaChunk.x > this.megaChunk.x + 1 ||
+                child.megaChunk.y < this.megaChunk.y - 1 || child.megaChunk.y > this.megaChunk.y + 1
+            ) objectsToRemove.push(child);
+        });
+
+        objectsToRemove.forEach((object) => engine.removeObject(object as THREE.Mesh));
 
         for (let chunkX = 0; chunkX < 3; chunkX++) {
             for (let chunkZ = 0; chunkZ < 3; chunkZ++) {
-                const x = (this.megaChunk.x + chunkX-1) * (this.megaChunkSize.x+1);
-                const y = minHeight;
-                const z = (this.megaChunk.y + chunkZ-1) * (this.megaChunkSize.z+1);
-                const position = new THREE.Vector3(x, y, z)
+                const thisChunkX = this.megaChunk.x + chunkX-1;
+                const thisChunkZ = this.megaChunk.y + chunkZ-1;
 
-                this.megaChunks[chunkX][chunkZ] = blocks.createInstances(toDisplayBlocks[chunkX][chunkZ], position);
-                Object.values(this.megaChunks[chunkX][chunkZ]).forEach((cube: any) => { this.megaChunksGroup.add(cube) })
+                if (this.megaChunksGroup.children.filter((child: any) => child.megaChunk.x == thisChunkX && child.megaChunk.y == thisChunkZ).length < 1) {
+                    const position = new THREE.Vector3(thisChunkX * (this.megaChunkSize.x+1), minHeight, thisChunkZ * (this.megaChunkSize.z+1))
+    
+                    this.megaChunks[chunkX][chunkZ] = blocks.createInstances(toDisplayBlocks[chunkX][chunkZ], position);
+                    Object.values(this.megaChunks[chunkX][chunkZ]).forEach((cube: any) => {
+                        cube.megaChunk = new THREE.Vector2(thisChunkX, thisChunkZ);
+                        this.megaChunksGroup.add(cube);
+                    })
+                }
             }
         }
     }

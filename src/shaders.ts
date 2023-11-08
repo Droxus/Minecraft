@@ -1,5 +1,3 @@
-const textureLength: number = 6;
-
 export const vertexBoxInstancedShader: string = `
 
     varying vec2 vUv;
@@ -7,12 +5,11 @@ export const vertexBoxInstancedShader: string = `
 
     attribute float textureIndex;
 
-
     void main() 
     {
         vUv = uv;
 
-        vTextureIndex=textureIndex;
+        vTextureIndex = textureIndex;
 
         gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
     }
@@ -21,20 +18,30 @@ export const vertexBoxInstancedShader: string = `
 export const fragmentBoxInstancedShader: string = `
 
     varying vec2 vUv;
-    uniform sampler2D map[${textureLength}];
-
     varying float vTextureIndex;
+
+    uniform sampler2D map;
+    uniform vec2 atlasSize;
 
     void main() 
     {
-        float x = vTextureIndex;
-        vec4 col;
+        float columns = atlasSize.x;
+        float rows = atlasSize.y;
 
-        col = texture2D(map[0], vUv ) * step(-0.1, x) * step(x, 0.1);
-        col += texture2D(map[1], vUv ) * step(0.9, x) * step(x, 1.1);
-        col += texture2D(map[2], vUv ) * step(1.9, x) * step(x, 2.1);
+        float maxProperty = max(columns, rows);
+        vec2 scale = vec2(maxProperty / columns, maxProperty / rows);
 
-        gl_FragColor = col;
+        float index = vTextureIndex;
+
+        float xShift = floor(index / columns);
+        float yShift = mod(index, columns) - (columns - 1.0);
+
+        float x = (vUv.x + xShift) * scale.x;
+        float y = (vUv.y - yShift) * scale.y;
+
+        vec2 uv = vec2(x, y) / maxProperty;
+
+        gl_FragColor = texture2D( map, uv );
     }
 
 `
