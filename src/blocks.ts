@@ -2,47 +2,50 @@ import * as THREE from 'three';
 import { engine } from './main';
 import {vertexBoxInstancedShader, fragmentBoxInstancedShader} from './shaders'
 
-
 const isLoocalHost: boolean = (window.location.href.startsWith('http://localhost') || window.location.href.startsWith('http://127.0.0.1'));
 const contentPath: string = isLoocalHost ? '' : 'https://raw.githubusercontent.com/Droxus/Minecraft/main/';
-const atlasPath: string = contentPath + '/src/assets/' + 'atlas.png';
+const atlasPath: string = contentPath + '/src/assets/atlas.png';
 
 export default class Blocks {
     private blockSize: number;
     private boxGeometry: THREE.BoxGeometry;
     private cube: any
     private matrix: THREE.Matrix4;
-    private sides: string[];
     private material: THREE.Material;
-
+    
     private maxCustomCubes: number;
     private customCube: any;
     private createdBlocks: any[];
     
-    public texture: THREE.Texture;
+    public sides: string[];
+    public texture: THREE.Texture | undefined;
 
     constructor() {
-        this.blockSize = 1;
-        this.boxGeometry = new THREE.BoxGeometry(this.blockSize, this.blockSize, this.blockSize);
         this.cube = {};
-        this.matrix = new THREE.Matrix4();
+        this.customCube = {};
+        this.createdBlocks = [];
+        this.blockSize = 1;
+        this.maxCustomCubes = 64*64;
         this.sides = [ 'right', 'left', 'top', 'bottom', 'front', 'back' ];
+        this.matrix = new THREE.Matrix4();
+        this.boxGeometry = new THREE.BoxGeometry(this.blockSize, this.blockSize, this.blockSize);
 
         this.sides.forEach((side: any) => this.cube[side] = undefined);
 
-        this.texture = new THREE.TextureLoader().load(atlasPath);
-        
-        this.texture.format = THREE.RGBAFormat
-        this.texture.minFilter = THREE.NearestFilter;
-        this.texture.magFilter = THREE.NearestFilter;
-        this.texture.wrapS = THREE.RepeatWrapping;
-        this.texture.wrapT = THREE.RepeatWrapping;
-
+        this.texture = this.loadTexture();
         this.material = this.getBoxMaterial(this.texture);
+    }
 
-        this.maxCustomCubes = 64*64;
-        this.customCube = {};
-        this.createdBlocks = [];
+    private loadTexture() {
+        const texture = new THREE.TextureLoader().load(atlasPath);
+        
+        texture.format = THREE.RGBAFormat
+        texture.minFilter = THREE.NearestFilter;
+        texture.magFilter = THREE.NearestFilter;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+
+        return texture
     }
 
     private getBoxMaterial(textures: THREE.Texture): THREE.ShaderMaterial {
@@ -82,10 +85,10 @@ export default class Blocks {
         return new THREE.InstancedMesh(geometry, this.material, length)
     }
 
-    public createInstances(toDisplayBlocks: any, position: any) {
-        const texturesArray = new THREE.InstancedBufferAttribute(new Uint8Array([10, 24, 10, 25, 10, 24, 10, 25]), 1);
+    public createInstances(toDisplayBlocks: any, position: any, texturesArray: number[]) {
+        const texturesBufferArray = new THREE.InstancedBufferAttribute(new Uint16Array(texturesArray), 1);
 
-        this.sides.forEach((side: string, index) => this.cube[side] = this.getInstancedMesh(index, texturesArray, toDisplayBlocks[side].length))
+        this.sides.forEach((side: string, index) => this.cube[side] = this.getInstancedMesh(index, texturesBufferArray, toDisplayBlocks[side].length))
 
         Object.entries(toDisplayBlocks).forEach(([side, blocks]: any) => {
             blocks.forEach((block: any, index: number) => {
@@ -102,10 +105,12 @@ export default class Blocks {
     }
 
     private createCustomInstances() {
-        const texturesArray = new THREE.InstancedBufferAttribute(new Uint8Array([10, 24, 10, 25, 10, 24, 10, 25]), 1);
+        const texturesArray = [10, 24, 25];
+        texturesArray.length = this.maxCustomCubes;
+        const texturesBufferArray = new THREE.InstancedBufferAttribute(new Uint16Array(texturesArray), 1);
 
         this.sides.forEach((side: string, index) => {
-            this.customCube[side] = this.getInstancedMesh(index, texturesArray, this.maxCustomCubes);
+            this.customCube[side] = this.getInstancedMesh(index, texturesBufferArray, this.maxCustomCubes);
             this.customCube[side].position.set(0, 0, 0)
         })
 

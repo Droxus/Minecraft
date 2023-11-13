@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { settings } from './main';
 
 export default class Engine {
     public scene: THREE.Scene;
@@ -11,9 +12,9 @@ export default class Engine {
 
     constructor() {
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+        this.camera = new THREE.PerspectiveCamera( settings.camera.fov, window.innerWidth / window.innerHeight, settings.camera.near, settings.camera.far );
         this.renderer = new THREE.WebGLRenderer();
-        this.light = new THREE.AmbientLight( 0xffffff );
+        this.light = new THREE.AmbientLight( 'white' );
         this.clock = new THREE.Clock();
         this.delta = 0;
 
@@ -49,6 +50,12 @@ export default class Engine {
         Array.isArray(material) ? material.forEach((material: THREE.Material) => material.dispose()) : material.dispose();
     
         object.parent?.remove(object);
+    }
+
+    public sameVectors(vec1: THREE.Vector2 | THREE.Vector3 | THREE.Vector4, vec2: THREE.Vector2 | THREE.Vector3 | THREE.Vector4) {
+        vec1 = vec1 as THREE.Vector4;
+        vec2 = vec2 as THREE.Vector4;
+        return vec1.x === vec2.x && vec1.y === vec2.y &&  vec1.z === vec2.z && vec1.w === vec2.w;
     }
 
     private onResize(): void {
