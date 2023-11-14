@@ -35,45 +35,17 @@ export default class Map {
     }
 
     private generateWorld() {
-        const generatedMegaChunk = this.getGeneratedMegaChunk();
-        // const toDisplayBlocks = this.checkBetweenChunksBlocksColide(generatedMegaChunk);
+        const chunkView = this.getGeneratedChunkView();
+        const toDisplayBlocks = this.getDisplayableChunkView(chunkView);
 
-        // this.displayGeneratedMegaChunk(toDisplayBlocks);
+        this.deleteChunksOutView()
 
-        this.displayGeneratedMegaChunk(generatedMegaChunk);
+        this.displayInViewChunks(toDisplayBlocks);
     }
 
-    private getToDisplayBlocks(chunkArray: any) {
-        const toDisplayBlocks: any = { };
-        const ySize = chunkArray.length;
-        const xSize =  chunkArray[0].length;
-        const zSize = chunkArray[0][0].length;
 
-        blocks.sides.forEach((side: any) => toDisplayBlocks[side] = [])
 
-        for (let y = 0; y < ySize; ++y) {
-            for (let x = 0; x < xSize; ++x) {
-                for (let z = 0; z < zSize; ++z) {
-                    if (chunkArray[y][x][z] && chunkArray[y][x][z].name !== 'air') {      
-                        if (!chunkArray[y+1] || chunkArray[y+1][x][z].name == 'air') toDisplayBlocks.top.push([x, y, z]);
-                        if (!chunkArray[y-1] || chunkArray[y-1][x][z].name == 'air') toDisplayBlocks.bottom.push([x, y, z]);
-                        if (x !== 0 && x !== xSize-1) {
-                            if (!chunkArray[y][x+1] || chunkArray[y][x+1][z].name == 'air') toDisplayBlocks.right.push([x, y, z]);
-                            if (!chunkArray[y][x-1] || chunkArray[y][x-1][z].name == 'air') toDisplayBlocks.left.push([x, y, z]);
-                        }
-                        if (z !== 0 && z !== zSize-1) {
-                            if (!chunkArray[y][x][z+1] || chunkArray[y][x][z+1].name == 'air') toDisplayBlocks.front.push([x, y, z]);
-                            if (!chunkArray[y][x][z-1] || chunkArray[y][x][z-1].name == 'air') toDisplayBlocks.back.push([x, y, z]);
-                        }
-                    }
-                }
-            }
-        }
-
-        return toDisplayBlocks; 
-    }
-
-    private generateBlock(x: number, y: number, z: number) {
+    private getGenerateBlock(x: number, y: number, z: number) {
         const defaultBlock = 'stone';
         return {name: defaultBlock};
     }
@@ -85,92 +57,92 @@ export default class Map {
 
         chunkArray.forEach((_, y) => 
             chunkArray[y].forEach((_, x) => 
-                chunkArray[y][x].forEach((_, z) => chunkArray[y][x][z] = this.generateBlock(x, y, z) )));
+                chunkArray[y][x].forEach((_, z) => chunkArray[y][x][z] = this.getGenerateBlock(x, y, z) )));
 
         return chunkArray;
     }
 
-    private getGeneratedMegaChunk() {
-        let chunkView: any[][] = [];
-        let toDisplayBlocks: any[][] = [];
+    private getGeneratedChunkView() {
+        const chunkView = new Array(this.gridSize)
+            .fill(null).map(() => new Array(this.gridSize).fill([]));
 
-        for (let chunkX = 0; chunkX < this.gridSize; chunkX++) {
-            chunkView.push([]);
-            toDisplayBlocks.push([]);
-            for (let chunkZ = 0; chunkZ < this.gridSize; chunkZ++) {
-                const chunkArray = this.getGeneratedChunk();
-                chunkView[chunkX].push(chunkArray);
+        chunkView.forEach((_, x) => 
+            chunkView[x].forEach((_, y) => 
+                chunkView[x][y] = this.getGeneratedChunk() ));
 
-                const toDisplayBlocksChunk = this.getToDisplayBlocks(chunkView[chunkX][chunkZ]);
-                toDisplayBlocks[chunkX].push(toDisplayBlocksChunk);
-            }
-        }
+        return chunkView;
+    }
+
+    private getDisplayableChunkView(chunkView: any[][]) {
+        const toDisplayBlocks = new Array(this.gridSize)
+            .fill(null).map(() => new Array(this.gridSize).fill([]));
+
+        toDisplayBlocks.forEach((_, x) => 
+            toDisplayBlocks[x].forEach((_, y) => 
+                toDisplayBlocks[x][y] = this.getDisplayableBlocks(chunkView[x][y]) ));
 
         return toDisplayBlocks;
     }
 
-    private displayGeneratedMegaChunk(toDisplayBlocks: any) {
-        const objectsToRemove: any[] = [];
+    private deleteChunksOutView() {
+        this.megaChunksGroup.children.filter((child: any) => 
+            child.megaChunk.x < this.megaChunk.x - 1 || child.megaChunk.x > this.megaChunk.x + 1 ||
+            child.megaChunk.y < this.megaChunk.y - 1 || child.megaChunk.y > this.megaChunk.y + 1
+        ).forEach((object) => engine.removeObject(object as THREE.Mesh));
+    }
 
-        this.megaChunksGroup.children.forEach((child: any) => {
-            if (
-                child.megaChunk.x < this.megaChunk.x - 1 || child.megaChunk.x > this.megaChunk.x + 1 ||
-                child.megaChunk.y < this.megaChunk.y - 1 || child.megaChunk.y > this.megaChunk.y + 1
-            ) objectsToRemove.push(child);
-        });
+    private displayMegaChunk(toDisplayBlocks: any, chunkX: number, chunkZ: number) {
+        const thisChunk = new THREE.Vector2(this.megaChunk.x + chunkX-1, this.megaChunk.y + chunkZ-1);
+        const isChunkDisplaying = this.megaChunksGroup.children.filter((child: any) => engine.sameVectors(child.megaChunk, thisChunk)).length > 0;
 
-        objectsToRemove.forEach((object) => engine.removeObject(object as THREE.Mesh));
+        if (!isChunkDisplaying) {
+            const [ x, y, z ] = [ thisChunk.x * (this.megaChunkSize.x+1), this.minHeight, thisChunk.y * (this.megaChunkSize.z+1) ];
+            const position = new THREE.Vector3(x, y, z);
 
-        for (let chunkX = 0; chunkX < this.gridSize; chunkX++) {
-            for (let chunkZ = 0; chunkZ < this.gridSize; chunkZ++) {
-                const thisChunk = new THREE.Vector2(this.megaChunk.x + chunkX-1, this.megaChunk.y + chunkZ-1);
-                const groupChildren = this.megaChunksGroup.children;
-                const chunkDisplaying = groupChildren.filter((child: any) => engine.sameVectors(child.megaChunk, thisChunk)).length > 0;
-
-                if (!chunkDisplaying) {
-                    const [ x, y, z ] = [ thisChunk.x * (this.megaChunkSize.x+1), this.minHeight, thisChunk.y * (this.megaChunkSize.z+1) ];
-                    const position = new THREE.Vector3(x, y, z);
-    
-                    this.megaChunks[chunkX][chunkZ] = blocks.createInstances(toDisplayBlocks[chunkX][chunkZ], position, []);
-                    Object.values(this.megaChunks[chunkX][chunkZ]).forEach((cube: any) => {
-                        cube.megaChunk = new THREE.Vector2(thisChunk.x, thisChunk.y);
-                        this.megaChunksGroup.add(cube);
-                    })
-                }
-            }
+            this.megaChunks[chunkX][chunkZ] = blocks.createInstances(toDisplayBlocks[chunkX][chunkZ], position, []);
+            Object.values(this.megaChunks[chunkX][chunkZ]).forEach((cube: any) => {
+                cube.megaChunk = new THREE.Vector2(thisChunk.x, thisChunk.y);
+                this.megaChunksGroup.add(cube);
+            })
         }
     }
 
-    // private checkBetweenChunksBlocksColide(chunks: any) {
-    //     chunks.forEach((chunkRow: any[], x: number) =>
-    //         chunkRow.forEach((_, y: number) => {
-    //             const isRightSide = (x == 0 || x == 1);
-    //             const isFrontSide = (y == 0 || y == 1);
+    private getNeighbourSides(chunkArray: any, y: number, x: number, z: number) {
+        const neighbourSides: string[] = [];
 
-    //             if (isRightSide) this.removeUndisplayableBlocks(chunks, x, y, true);
-    //             if (isFrontSide) this.removeUndisplayableBlocks(chunks, x, y, false);
-    //         })
-    //     )
+        if (chunkArray[y][x][z].name !== 'air') {      
+            if (!chunkArray[y+1] || chunkArray[y+1][x][z].name == 'air') neighbourSides.push('top');
+            if (!chunkArray[y-1] || chunkArray[y-1][x][z].name == 'air') neighbourSides.push('bottom');
+            if (x !== 0 && x !== this.megaChunkSize.x-1) {
+                if (!chunkArray[y][x+1] || chunkArray[y][x+1][z].name == 'air') neighbourSides.push('right');
+                if (!chunkArray[y][x-1] || chunkArray[y][x-1][z].name == 'air') neighbourSides.push('left');
+            }
+            if (z !== 0 && z !== this.megaChunkSize.z-1) {
+                if (!chunkArray[y][x][z+1] || chunkArray[y][x][z+1].name == 'air') neighbourSides.push('front');
+                if (!chunkArray[y][x][z-1] || chunkArray[y][x][z-1].name == 'air') neighbourSides.push('back');
+            }
+        }
 
-    //     return chunks;
-    // }
+        return neighbourSides;
+    }
 
-    // private removeUndisplayableBlocks(chunks: any, x: number, y: number, condition: boolean) {
-    //     const sides = condition ? [ 'right', 'left' ] : [ 'front', 'back' ];
-    //     const neighbourPos = condition ? 2 : 0;
-    //     const zShift = condition ? 0 : 1;
-    //     const xShift = condition ? 1 : 0;
+    private getDisplayableBlocks(chunkArray: any[][][]) {
+        const toDisplayBlocks: any = { };
+        blocks.sides.forEach((side: any) => toDisplayBlocks[side] = [])
 
-    //     chunks[x][y][sides[0]] = chunks[x][y][sides[0]].filter((block1: any) => {
-    //         const [ x1, y1 ] = [ block1[1], block1[neighbourPos] ];
+        chunkArray.forEach((_, y) => 
+            chunkArray[y].forEach((_, x) => 
+                chunkArray[y][x].forEach((_, z) => 
+                    this.getNeighbourSides(chunkArray, y, x, z).forEach((side: string) => toDisplayBlocks[side].push([x, y, z])) )));
 
-    //         return !chunks[x + xShift][y + zShift][sides[1]].some((block2: any, neighbourIndex: number) => {
-    //             const [ x2, y2 ] = [ block2[1], block2[neighbourPos] ];
+        return toDisplayBlocks;
+    }
 
-    //             if (x1 === x2 && y1 === y2) return delete chunks[x + xShift][y + zShift][sides[1]][neighbourIndex];
-    //         })
-    //     })
-    // }
+    private displayInViewChunks(toDisplayBlocks: any) {
+        this.megaChunks.forEach((_, x) => 
+            this.megaChunks.forEach((_, z) => 
+                this.displayMegaChunk(toDisplayBlocks, x, z) ));
+    }
 
     public onCameraPositionChange() {
         const { x, z } = engine.camera.position;
