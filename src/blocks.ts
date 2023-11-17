@@ -9,7 +9,6 @@ const atlasPath: string = contentPath + '/src/assets/atlas.png';
 export default class Blocks {
     private blockSize: number;
     private boxGeometry: THREE.BoxGeometry;
-    private cube: any
     private matrix: THREE.Matrix4;
     private material: THREE.Material;
     
@@ -21,7 +20,6 @@ export default class Blocks {
     public texture: THREE.Texture | undefined;
 
     constructor() {
-        this.cube = {};
         this.customCube = {};
         this.createdBlocks = [];
         this.blockSize = 1;
@@ -29,8 +27,6 @@ export default class Blocks {
         this.sides = [ 'right', 'left', 'top', 'bottom', 'front', 'back' ];
         this.matrix = new THREE.Matrix4();
         this.boxGeometry = new THREE.BoxGeometry(this.blockSize, this.blockSize, this.blockSize);
-
-        this.sides.forEach((side: any) => this.cube[side] = undefined);
 
         this.texture = this.loadTexture();
         this.material = this.getBoxMaterial(this.texture);
@@ -87,21 +83,22 @@ export default class Blocks {
 
     public createInstances(toDisplayBlocks: any, position: any, texturesArray: number[]) {
         const texturesBufferArray = new THREE.InstancedBufferAttribute(new Uint16Array(texturesArray), 1);
+        const cube: any = {};
 
-        this.sides.forEach((side: string, index) => this.cube[side] = this.getInstancedMesh(index, texturesBufferArray, toDisplayBlocks[side].length))
+        this.sides.forEach((side: string, index) => cube[side] = this.getInstancedMesh(index, texturesBufferArray, toDisplayBlocks[side].length))
 
         Object.entries(toDisplayBlocks).forEach(([side, blocks]: any) => {
             blocks.forEach((block: any, index: number) => {
                 const [ x, y, z ] = [ block[0], block[1], block[2] ];
 
                 this.matrix.setPosition(x, y, z);
-                this.cube[side].setMatrixAt(index, this.matrix);
+                cube[side].setMatrixAt(index, this.matrix);
             });
             const {x, y, z} = position;
-            this.cube[side].position.set(x, y, z);
+            cube[side].position.set(x, y, z);
         })
 
-        return this.cube;
+        return cube;
     }
 
     private createCustomInstances() {
