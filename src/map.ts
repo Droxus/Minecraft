@@ -45,8 +45,8 @@ export default class Map {
 
     private getGenerateBlock(x: number, y: number, z: number) {
         // const defaultBlock = (y == 1 && !(x == 0 || z == 0 || x == this.megaChunkSize.x-1 || z == this.megaChunkSize.z-1)) ? 'air' : 'stone';
-        // const defaultBlock = (y == 1 && !(x == 63 || z == 63)) ? 'air' : 'stone';
-        const defaultBlock = (y == 1 && !(x == 0 || z == 0)) ? 'air' : 'stone';
+        const defaultBlock = (y == 1 && !(x == 63 || z == 63)) ? 'air' : 'stone';
+        // const defaultBlock = (y == 1 && !(x == 0 || z == 0)) ? 'air' : 'stone';
         return {name: defaultBlock};
     }
 
@@ -140,68 +140,63 @@ export default class Map {
                 this.displayMegaChunk(toDisplayBlocks, x, z) ));
     }
 
+    private getBetweenChunksBlocks(params: any) {
+        const {chunkView, chunkX, chunkZ, y, x} = params;
+        const [xPos, zPos] = [(this.megaChunk.x + chunkX-1) * (this.megaChunkSize.x+1), (this.megaChunk.y + chunkZ-1) * (this.megaChunkSize.z+1)];
+        const position = new THREE.Vector3(xPos, y, zPos);
+        const collidedSides: any = [];
+        const z = x;
+        
+        if (chunkZ < 2) {
+            const currentBlockName = chunkView[chunkX][chunkZ+1][y][x][0].name;
+            const neighbourBlockName = chunkView[chunkX][chunkZ][y][x][this.megaChunkSize.z-1].name;
+
+            if (currentBlockName !== "air" && neighbourBlockName == "air") {
+                const positionArray = [position.x  + x, y, position.z + (this.megaChunkSize.z+1)];
+                collidedSides.push({"name": currentBlockName, "position": positionArray, "side": "back"});
+            } 
+            else if (currentBlockName == "air" && neighbourBlockName !== "air") {
+                const positionArray = [position.x + x, y, position.z + (this.megaChunkSize.z-1)];
+                collidedSides.push({"name": neighbourBlockName, "position": positionArray, "side": "front" });
+            }
+        }
+        if (chunkX < 2) {
+            const currentBlockName = chunkView[chunkX+1][chunkZ][y][0][z].name;
+            const neighbourBlockName = chunkView[chunkX][chunkZ][y][this.megaChunkSize.z-1][z].name;
+
+            if (currentBlockName !== "air" && neighbourBlockName == "air") {
+                const positionArray = [position.x + (this.megaChunkSize.x+1), y, position.z + z];
+                collidedSides.push({"name": currentBlockName, "position": positionArray, "side": "left"});
+            } 
+            else if (currentBlockName == "air" && neighbourBlockName !== "air") {
+                const positionArray = [position.x + (this.megaChunkSize.z-1), y, position.z + z];
+                collidedSides.push({"name": neighbourBlockName, "position": positionArray, "side": "right"});
+            }
+        }
+
+        return collidedSides;
+    }
+
     private displayBetweenChunksBlocks(chunkView: any[][][][]) {
         blocks.sides.forEach((side: string) => engine.scene.remove(this.betweenChunksBlocks ? this.betweenChunksBlocks[side] : undefined))
-        // const position = new THREE.Vector3(this.megaChunk.x * (this.megaChunkSize.x+1), this.minHeight, this.megaChunk.y * (this.megaChunkSize.z+1))
         const position = new THREE.Vector3(0,0,0)
+        const colidedSides: any = [];
 
-        let xSides: any = [];
+        chunkView.forEach((_, chunkX) =>
+            chunkView[chunkX].forEach((_, chunkZ) =>
+                chunkView[chunkX][chunkZ].forEach((_, y) =>
+                    chunkView[chunkX][chunkZ][y].forEach((_, x) =>
+                        colidedSides.push(...this.getBetweenChunksBlocks({chunkView, chunkX, chunkZ, y, x}).slice(0, 2)) ))))
 
-        chunkView.forEach((_, chunkX) => {
-            chunkView[chunkX].forEach((_, chunkZ) => {
-                chunkView[chunkX][chunkZ].forEach((_, y) => {
-                    chunkView[chunkX][chunkZ][y].forEach((_, x) => {
-                        if (chunkZ < 2) {
-                            if (chunkView[chunkX][chunkZ+1][y][x][0].name !== "air" && chunkView[chunkX][chunkZ][y][x][this.megaChunkSize.z-1].name == "air") {
-                                const xPos = (this.megaChunk.x + chunkX-1) * (this.megaChunkSize.x+1) + x;
-                                const yPos = y;
-                                const zPos = (this.megaChunk.y + chunkZ) * (this.megaChunkSize.z+1) + 0;
-                                const position = [xPos, yPos, zPos]
-                                xSides.push({"name": chunkView[chunkX][chunkZ+1][y][x][0].name, "position": position})
-                            } else 
-                            
-                            if (chunkView[chunkX][chunkZ+1][y][x][0].name == "air" && chunkView[chunkX][chunkZ][y][x][this.megaChunkSize.z-1].name !== "air") {
-                                const xPos = (this.megaChunk.x + chunkX-1) * (this.megaChunkSize.x+1) + x;
-                                const yPos = y;
-                                const zPos =  (this.megaChunk.y + chunkZ-1) * (this.megaChunkSize.z+1) + this.megaChunkSize.z-1;
-                                const position = [xPos, yPos, zPos]
-                                xSides.push({"name": chunkView[chunkX][chunkZ][y][x][0].name, "position": position})
-                            }
-                        }
-                        if (chunkX < 2) {
-                            let z = x;
-                            if (chunkView[chunkX+1][chunkZ][y][0][z].name !== "air" && chunkView[chunkX][chunkZ][y][this.megaChunkSize.z-1][z].name == "air") {
-                                const xPos = (this.megaChunk.x + chunkX) * (this.megaChunkSize.x+1) + 0;
-                                const yPos = y;
-                                const zPos =  (this.megaChunk.y + chunkZ-1) * (this.megaChunkSize.z+1) + z;
-                                const position = [xPos, yPos, zPos]
-                                xSides.push({"name": chunkView[chunkX][chunkZ][y][0][z].name, "position": position})
-                            } 
-                            else if (chunkView[chunkX+1][chunkZ][y][0][z].name == "air" && chunkView[chunkX][chunkZ][y][this.megaChunkSize.z-1][z].name !== "air") {
-                                const xPos = (this.megaChunk.x + chunkX-1) * (this.megaChunkSize.x+1) + this.megaChunkSize.z-1;
-                                const yPos = y;
-                                const zPos =  (this.megaChunk.y + chunkZ-1) * (this.megaChunkSize.z+1) + z;
-                                const position = [xPos, yPos, zPos]
-                                xSides.push({"name": chunkView[chunkX+1][chunkZ][y][this.megaChunkSize.z-1][z].name, "position": position})
-                            }
-                        }
-                    })
-                })
+        console.log(colidedSides)
 
-            })
-        })
+        let betweenChunksBlocks: any = {};
+        blocks.sides.forEach((side: string) => betweenChunksBlocks[side] = []);
+        colidedSides.forEach((_: any, x: number) => betweenChunksBlocks[colidedSides[x].side].push(colidedSides[x].position));
 
-        let arr: any = {};
-        blocks.sides.forEach((side: string) => {
-            arr[side] = []
-            xSides.forEach((_: any, x: number) => {
-                arr[side].push(xSides[x].position)
-            })
-        });
-
-        if (!arr) return;
-        this.betweenChunksBlocks = blocks.createInstances(arr, position, []);
-        blocks.sides.forEach((side: string) => engine.scene.add(this.betweenChunksBlocks[side]))
+        if (!betweenChunksBlocks) return;
+        this.betweenChunksBlocks = blocks.createInstances(betweenChunksBlocks, position, []);
+        blocks.sides.forEach((side: string) => engine.scene.add(this.betweenChunksBlocks[side]));
     }
 
     public onCameraPositionChange() {
