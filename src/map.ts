@@ -15,7 +15,7 @@ export default class Map {
     constructor() {
         console.time();
 
-        this.gridSize = 3;
+        this.gridSize = 5;
         this.minHeight = 0;
         this.megaChunks = new Array(this.gridSize).fill(null).map(() => new Array(this.gridSize).fill([]));
         this.megaChunk = new THREE.Vector2(0, 0);
@@ -160,6 +160,7 @@ export default class Map {
                 collidedSides.push({"name": neighbourBlockName, "position": positionArray, "side": "front" });
             }
         }
+        
         if (chunkX < 2) {
             const currentBlockName = chunkView[chunkX+1][chunkZ][y][0][z].name;
             const neighbourBlockName = chunkView[chunkX][chunkZ][y][this.megaChunkSize.z-1][z].name;
@@ -194,7 +195,9 @@ export default class Map {
         blocks.sides.forEach((side: string) => betweenChunksBlocks[side] = []);
         colidedSides.forEach((_: any, x: number) => betweenChunksBlocks[colidedSides[x].side].push(colidedSides[x].position));
 
-        if (!betweenChunksBlocks) return;
+        if (!betweenChunksBlocks) 
+            return;
+
         this.betweenChunksBlocks = blocks.createInstances(betweenChunksBlocks, position, []);
         blocks.sides.forEach((side: string) => engine.scene.add(this.betweenChunksBlocks[side]));
     }

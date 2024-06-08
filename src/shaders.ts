@@ -1,5 +1,4 @@
 export const vertexBoxInstancedShader: string = `
-
     varying vec2 vUv;
     varying float vTextureIndex;
 
@@ -13,10 +12,9 @@ export const vertexBoxInstancedShader: string = `
 
         gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
     }
+`;
 
-`
 export const fragmentBoxInstancedShader: string = `
-
     varying vec2 vUv;
     varying float vTextureIndex;
 
@@ -43,5 +41,4 @@ export const fragmentBoxInstancedShader: string = `
 
         gl_FragColor = texture2D( map, uv );
     }
-
-`
+`;

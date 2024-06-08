@@ -4,6 +4,7 @@ export default class Settings {
         near: 0.1,
         far: 1000
     };
+    
     public map = {
         drawRadius: 4
     };

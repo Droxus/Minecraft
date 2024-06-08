@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { engine } from './main';
-import {vertexBoxInstancedShader, fragmentBoxInstancedShader} from './shaders'
+import { vertexBoxInstancedShader, fragmentBoxInstancedShader } from './shaders'
 
-const isLoocalHost: boolean = (window.location.href.startsWith('http://localhost') || window.location.href.startsWith('http://127.0.0.1'));
+const isLoocalHost: boolean = window.location.href.startsWith('http://localhost') ||
+                                window.location.href.startsWith('http://127.0.0.1');
 const contentPath: string = isLoocalHost ? '' : 'https://raw.githubusercontent.com/Droxus/Minecraft/main/';
 const atlasPath: string = contentPath + '/src/assets/atlas.png';
 
@@ -41,7 +42,7 @@ export default class Blocks {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
 
-        return texture
+        return texture;
     }
 
     private getBoxMaterial(textures: THREE.Texture): THREE.ShaderMaterial {
@@ -82,6 +83,8 @@ export default class Blocks {
     }
 
     public createInstances(toDisplayBlocks: any, position: any, texturesArray: number[]) {
+        texturesArray.length = this.maxCustomCubes;
+        
         const texturesBufferArray = new THREE.InstancedBufferAttribute(new Uint16Array(texturesArray), 1);
         const cube: any = {};
 
@@ -121,7 +124,9 @@ export default class Blocks {
 
         this.createdBlocks.push([x, y, z]);
 
-        if (blockIndex > this.maxCustomCubes || !this.customCube.top) this.createCustomInstances();
+        if (blockIndex > this.maxCustomCubes || !this.customCube.top) {
+            this.createCustomInstances();
+        }
 
         this.matrix.setPosition(x, y, z);
         this.sides.forEach(side => {

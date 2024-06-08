@@ -39,7 +39,8 @@ export default class Engine {
     }
 
     public removeAllObjects(objects: THREE.Mesh[]): void {
-        while (objects.length) this.removeObject(objects[0]);
+        while (objects.length) 
+            this.removeObject(objects[0]);
     }
 
     public removeObject(object: THREE.Mesh): void {
